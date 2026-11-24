@@ -1,0 +1,1537 @@
+Spacer(Modifier.height(16.dp))
+                Text("Branch", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.align(Alignment.Start))
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(branches) { branch ->
+                        val active = branch == selectedBranch
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) EmeraldGreen else SurfaceSubtle)
+                                .clickable { selectedBranch = branch }
+                                .padding(horizontal = 16.dp, vertical = 9.dp)
+                        ) {
+                            Text(
+                                branch,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                Text("Graduation Year", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.align(Alignment.Start))
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    years.forEach { year ->
+                        val active = year == selectedYear
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) EmeraldGreen else SurfaceSubtle)
+                                .clickable { selectedYear = year }
+                                .padding(vertical = 9.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                year,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary
+                            )
+                        }
+                    }
+                }
+                AuthMessageText(localError ?: message)
+                Spacer(Modifier.height(22.dp))
+                SpringActionButton(
+                    text = if (isLoading) "Please wait" else "Create Account",
+                    gradient = GreenActionGradient,
+                    onClick = {
+                        when {
+                            isLoading -> Unit
+                            fullName.isBlank() -> localError = "Enter your full name"
+                            !email.contains("@") -> localError = "Enter a valid email"
+                            password.length < 6 -> localError = "Password must be at least 6 characters"
+                            else -> {
+                                localError = null
+                                onSignUp(fullName.trim(), email.trim(), password, selectedBranch, selectedYear)
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuthHeaderPattern(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        drawCircle(PureWhite.copy(alpha = 0.08f), radius = w * 0.42f, center = Offset(w * 0.92f, h * 0.14f))
+        drawCircle(PureWhite.copy(alpha = 0.06f), radius = w * 0.30f, center = Offset(w * 0.62f, h * 0.85f))
+        drawCircle(SunsetOrange.copy(alpha = 0.32f), radius = w * 0.06f, center = Offset(w * 0.78f, h * 0.46f))
+        drawCircle(SolarAmber.copy(alpha = 0.36f), radius = w * 0.025f, center = Offset(w * 0.24f, h * 0.22f))
+    }
+}
+
+// ==========================================
+// 7. HOME FEED SCREEN (WHITE + GREEN + ORANGE + SKY BLUE + VIOLET)
+// ==========================================
+@Composable
+fun HomeFeedScreen(
+    user: UserProfile,
+    items: List<VaultItem>,
+    savedIds: Set<String>,
+    onToggleSave: (String) -> Unit,
+    onItemClick: (VaultItem) -> Unit,
+    onNavigateToSell: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedQuickFilter by remember { mutableStateOf("All") }
+
+    val categories = listOf("All", "Notes", "Books", "Electronics", "Hostel", "Gear")
+
+    val filtered = remember(items, searchQuery, selectedCategory, selectedQuickFilter) {
+        items.filter { item ->
+            val matchesCat = selectedCategory == "All" || item.category.equals(selectedCategory, ignoreCase = true)
+            val matchesQuick = when (selectedQuickFilter) {
+                "Free" -> item.isFree
+                "Digital" -> item.isDigital
+                "Under ₹200" -> {
+                    val digits = item.price.filter { it.isDigit() }
+                    digits.isNotEmpty() && (digits.toIntOrNull() ?: Int.MAX_VALUE) < 200
+                }
+                else -> true
+            }
+            val matchesSearch = searchQuery.isBlank() ||
+                item.title.contains(searchQuery, ignoreCase = true) ||
+                item.description.contains(searchQuery, ignoreCase = true) ||
+                item.category.contains(searchQuery, ignoreCase = true)
+            matchesCat && matchesQuick && matchesSearch
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CanvasOffWhite),
+        contentPadding = PaddingValues(bottom = 104.dp)
+    ) {
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(PureWhite)
+                    .padding(horizontal = 20.dp, vertical = 14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(ProfileGradient),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                user.fullName.take(1).uppercase().ifBlank { "C" },
+                                color = PureWhite,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 16.sp
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("CampusVault", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "${user.fullName.ifBlank { "Member" }} • ${user.batchTag}",
+                                fontSize = 12.sp,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(EmeraldLight)
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            "VERIFIED",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = EmeraldGreen,
+                            letterSpacing = 0.6.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+
+                PillInputField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = "Search notes, books, calculators...",
+                    leadingIcon = { SearchIcon(color = TextSecondary, size = 18.dp) }
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(categories) { cat ->
+                        val active = cat == selectedCategory
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) EmeraldGreen else SurfaceSubtle)
+                                .clickable { selectedCategory = cat }
+                                .padding(horizontal = 15.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                cat,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(14.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickFilterPill("Free", selectedQuickFilter == "Free", SunsetOrange, Modifier.weight(1f)) {
+                    selectedQuickFilter = if (selectedQuickFilter == "Free") "All" else "Free"
+                }
+                QuickFilterPill("Digital", selectedQuickFilter == "Digital", SkyBlue, Modifier.weight(1f)) {
+                    selectedQuickFilter = if (selectedQuickFilter == "Digital") "All" else "Digital"
+                }
+                QuickFilterPill("Under ₹200", selectedQuickFilter == "Under ₹200", VioletPop, Modifier.weight(1f)) {
+                    selectedQuickFilter = if (selectedQuickFilter == "Under ₹200") "All" else "Under ₹200"
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(18.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Campus Listings", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    "${filtered.size} available",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldGreen
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+
+        if (filtered.isEmpty()) {
+            item {
+                EmptyFeedCard(
+                    onPostClick = onNavigateToSell,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+            }
+        } else {
+            item {
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(((filtered.size / 2 + 1) * 235).dp)
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    userScrollEnabled = false
+                ) {
+                    items(filtered, key = { it.id }) { item ->
+                        VaultGridCard(
+                            item = item,
+                            isSaved = item.id in savedIds,
+                            onToggleSave = { onToggleSave(item.id) },
+                            onClick = { onItemClick(item) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickFilterPill(
+    label: String,
+    active: Boolean,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val bg by animateColorAsState(if (active) accent else PureWhite, tween(180), label = "pillBg")
+    val fg by animateColorAsState(if (active) PureWhite else TextPrimary, tween(180), label = "pillFg")
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .border(1.dp, if (active) accent else BorderLight, RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+            .padding(vertical = 9.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = fg,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun VaultGridCard(
+    item: VaultItem,
+    isSaved: Boolean,
+    onToggleSave: () -> Unit,
+    onClick: () -> Unit
+) {
+    val accent = categoryAccent(item.category)
+    val cardHeight = if (item.isDigital || item.isFree) 196.dp else 224.dp
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(cardHeight)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        color = PureWhite,
+        shadowElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(accent.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CategoryArtIcon(category = item.category, tint = accent, size = 22.dp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(if (isSaved) SunsetOrange.copy(alpha = 0.14f) else SurfaceSubtle)
+                            .clickable(onClick = onToggleSave),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BookmarkIcon(
+                            filled = isSaved,
+                            color = if (isSaved) SunsetOrange else TextSecondary,
+                            size = 16.dp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    item.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    "${item.sellerName} • ${item.batchTag}",
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (item.isFree) "FREE" else item.price,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (item.isFree) EmeraldGreen else TextPrimary
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(accent.copy(alpha = 0.14f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        item.category,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = accent
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyFeedCard(onPostClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = PureWhite,
+        shadowElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(EmeraldLight),
+                contentAlignment = Alignment.Center
+            ) {
+                PlusIcon(color = EmeraldGreen, size = 26.dp)
+            }
+            Spacer(Modifier.height(14.dp))
+            Text("Nothing listed here yet", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Be the first to share notes, books, or hostel gear on campus.",
+                fontSize = 13.sp,
+                color = TextSecondary,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(18.dp))
+            SpringActionButton(
+                text = "Post an Item",
+                gradient = GreenActionGradient,
+                onClick = onPostClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(50))
+            )
+        }
+    }
+}
+
+// ==========================================
+// 8. POST / SELL UPLOAD SCREEN (GREEN + ORANGE + SKY BLUE)
+// ==========================================
+@Composable
+fun SellUploadScreen(
+    user: UserProfile,
+    isPosting: Boolean,
+    errorMessage: String?,
+    onPost: (VaultItem, Uri?) -> Unit
+) {
+    val context = LocalContext.current
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Notes") }
+    var pricingMode by remember { mutableStateOf("Paid") }
+    var price by remember { mutableStateOf("") }
+    var condition by remember { mutableStateOf("Good") }
+    var meetupSpot by remember { mutableStateOf("Central Library") }
+    var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var localError by remember { mutableStateOf<String?>(null) }
+
+    val categories = listOf("Notes", "Books", "Electronics", "Hostel", "Gear")
+    val pricingModes = listOf("Paid", "Free", "Borrow")
+    val conditions = listOf("New", "Like New", "Good", "Fair")
+    val meetups = listOf("Central Library", "Main Canteen", "Student Center", "Hostel Block A")
+
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        selectedFileUri = uri
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CanvasOffWhite)
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 108.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(PureWhite)
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+        ) {
+            Column {
+                Text("List on CampusVault", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "Posting as ${user.fullName.ifBlank { "Member" }} • ${user.batchTag}",
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = PureWhite,
+            shadowElevation = 2.dp
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text("Category", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(categories) { cat ->
+                        val active = cat == category
+                        val accent = categoryAccent(cat)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) accent else SurfaceSubtle)
+                                .clickable { category = cat }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                cat,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                PillInputField(
+                    value = title,
+                    onValueChange = { title = it },
+                    placeholder = "Title (e.g., Operating Systems Notes)"
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                PillInputField(
+                    value = description,
+                    onValueChange = { description = it },
+                    placeholder = "Short details, edition, or pickup notes"
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Listing Type", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    pricingModes.forEach { mode ->
+                        val active = mode == pricingMode
+                        val modeColor = when (mode) {
+                            "Free" -> EmeraldGreen
+                            "Borrow" -> SkyBlue
+                            else -> SunsetOrange
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) modeColor else SurfaceSubtle)
+                                .clickable {
+                                    pricingMode = mode
+                                    if (mode == "Free" || mode == "Borrow") price = ""
+                                }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                mode,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary
+                            )
+                        }
+                    }
+                }
+
+                if (pricingMode == "Paid") {
+                    Spacer(Modifier.height(12.dp))
+                    PillInputField(
+                        value = price,
+                        onValueChange = { price = it.filter { ch -> ch.isDigit() } },
+                        placeholder = "Price in ₹ (e.g., 150)",
+                        keyboardType = KeyboardType.Number
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Condition", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    conditions.forEach { cond ->
+                        val active = cond == condition
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) VioletPop else SurfaceSubtle)
+                                .clickable { condition = cond }
+                                .padding(vertical = 9.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                cond,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Campus Meetup Spot", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(meetups) { spot ->
+                        val active = spot == meetupSpot
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(if (active) EmeraldGreen else SurfaceSubtle)
+                                .clickable { meetupSpot = spot }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                spot,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (active) PureWhite else TextPrimary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(SkyLight)
+                        .clickable { filePicker.launch("*/*") }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        UploadIcon(color = SkyBlue, size = 18.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            selectedFileUri?.let { displayName(context, it) } ?: "Attach PDF or photo (optional)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SkyBlue,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        if (selectedFileUri == null) "Browse" else "Change",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = SkyBlue
+                    )
+                }
+
+                val feedback = localError ?: errorMessage
+                if (!feedback.isNullOrBlank()) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        feedback,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AlertCrimson
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                SpringActionButton(
+                    text = if (isPosting) "Publishing" else "Publish Listing",
+                    gradient = OrangeAccentGradient,
+                    onClick = {
+                        when {
+                            isPosting -> Unit
+                            title.isBlank() -> localError = "Please enter a title"
+                            pricingMode == "Paid" && price.isBlank() -> localError = "Enter a price or choose Free / Borrow"
+                            else -> {
+                                localError = null
+                                val isFree = pricingMode == "Free"
+                                val formattedPrice = when (pricingMode) {
+                                    "Free" -> "Free"
+                                    "Borrow" -> "Borrow"
+                                    else -> "₹$price"
+                                }
+                                onPost(
+                                    VaultItem(
+                                        id = "item_${System.currentTimeMillis()}",
+                                        title = title.trim(),
+                                        description = description.trim().ifBlank { "Available on campus at $meetupSpot." },
+                                        category = category,
+                                        price = formattedPrice,
+                                        pricingMode = pricingMode,
+                                        isFree = isFree,
+                                        isDigital = category == "Notes" || selectedFileUri != null,
+                                        condition = condition,
+                                        sellerName = user.fullName.ifBlank { "Member" },
+                                        batchTag = user.batchTag,
+                                        meetupSpot = meetupSpot
+                                    ),
+                                    selectedFileUri
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50))
+                )
+            }
+        }
+    }
+}
+
+// ==========================================
+// 9. PRODUCT DETAIL SCREEN
+// ==========================================
+@Composable
+fun ProductDetailScreen(
+    item: VaultItem,
+    isSaved: Boolean,
+    isDownloaded: Boolean,
+    onBack: () -> Unit,
+    onToggleSave: () -> Unit,
+    onPrimaryAction: () -> Unit
+) {
+    val accent = categoryAccent(item.category)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CanvasOffWhite)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(PureWhite)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceSubtle)
+                            .clickable(onClick = onBack),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BackIcon(color = TextPrimary, size = 18.dp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(accent.copy(alpha = 0.14f))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            item.category.uppercase(),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = accent
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(if (isSaved) SunsetOrange.copy(alpha = 0.14f) else SurfaceSubtle)
+                            .clickable(onClick = onToggleSave),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BookmarkIcon(
+                            filled = isSaved,
+                            color = if (isSaved) SunsetOrange else TextSecondary,
+                            size = 18.dp
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = PureWhite,
+                shadowElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(accent.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CategoryArtIcon(category = item.category, tint = accent, size = 24.dp)
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Column {
+                            Text(
+                                if (item.isFree) "FREE" else item.price,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (item.isFree) EmeraldGreen else TextPrimary
+                            )
+                            Text(
+                                "${item.pricingMode} • ${item.condition}",
+                                fontSize = 12.sp,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(item.title, style = MaterialTheme.typography.headlineSmall)
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(item.description, style = MaterialTheme.typography.bodyMedium)
+
+                    Spacer(Modifier.height(18.dp))
+
+                    DetailRowChip("Seller", "${item.sellerName} (${item.batchTag})", VioletPop)
+                    Spacer(Modifier.height(8.dp))
+                    DetailRowChip("Meetup Spot", item.meetupSpot, EmeraldGreen)
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = PureWhite,
+            shadowElevation = 12.dp
+        ) {
+            Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                val ctaLabel = when {
+                    isDownloaded -> "Opened / Claimed"
+                    item.isFree || item.pricingMode == "Borrow" -> "Claim on Campus"
+                    else -> "Request Item"
+                }
+                SpringActionButton(
+                    text = ctaLabel,
+                    gradient = GreenActionGradient,
+                    onClick = onPrimaryAction,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRowChip(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SurfaceSubtle)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = color)
+    }
+}
+
+// ==========================================
+// 10. PROFILE SCREEN
+// ==========================================
+@Composable
+fun ProfileScreen(
+    user: UserProfile,
+    listings: List<VaultItem>,
+    savedIds: Set<String>,
+    downloadedIds: Set<String>,
+    onMarkSold: (String) -> Unit,
+    onDeleteListing: (String) -> Unit,
+    onSignOut: () -> Unit
+) {
+    val myListings = remember(listings, user.id) {
+        listings.filter { it.sellerId == user.id || it.sellerId.isBlank() }
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CanvasOffWhite),
+        contentPadding = PaddingValues(bottom = 108.dp)
+    ) {
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = PureWhite,
+                shadowElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(ProfileGradient),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                user.fullName.take(1).uppercase().ifBlank { "C" },
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Black,
+                                color = PureWhite
+                            )
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                user.fullName.ifBlank { "Campus Member" },
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Text(
+                                "${user.batchTag} • ${user.collegeEmail}",
+                                fontSize = 12.sp,
+                                color = TextSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        ProfileMetricBox("Listed", myListings.size.toString(), EmeraldGreen, Modifier.weight(1f))
+                        ProfileMetricBox("Saved", savedIds.size.toString(), SunsetOrange, Modifier.weight(1f))
+                        ProfileMetricBox("Claimed", downloadedIds.size.toString(), SkyBlue, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(18.dp))
+            Text(
+                "Your Listings",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Spacer(Modifier.height(10.dp))
+        }
+
+        if (myListings.isEmpty()) {
+            item {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = PureWhite
+                ) {
+                    Text(
+                        "You haven't posted any items yet.",
+                        fontSize = 13.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(20.dp)
+                    )
+                }
+            }
+        } else {
+            items(myListings, key = { it.id }) { item ->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 5.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = PureWhite,
+                    shadowElevation = 1.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                "${if (item.isSold) "Sold" else item.price} • ${item.category}",
+                                fontSize = 12.sp,
+                                color = if (item.isSold) TextSecondary else EmeraldGreen,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (!item.isSold) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(EmeraldLight)
+                                        .clickable { onMarkSold(item.id) }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Mark Sold", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(AlertCrimson.copy(alpha = 0.1f))
+                                    .clickable { onDeleteListing(item.id) }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text("Remove", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AlertCrimson)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(22.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(PureWhite)
+                    .border(1.dp, BorderLight, RoundedCornerShape(50))
+                    .clickable(onClick = onSignOut)
+                    .padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Sign Out", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = AlertCrimson)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileMetricBox(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(color.copy(alpha = 0.1f))
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = color)
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+    }
+}
+
+// ==========================================
+// 11. SHARED COMPONENTS, FLOATING NAV & VECTOR ART
+// ==========================================
+@Composable
+fun PillInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    leadingIcon: (@Composable () -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(placeholder, fontSize = 14.sp, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        singleLine = true,
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        shape = RoundedCornerShape(50),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = SurfaceSubtle,
+            unfocusedContainerColor = SurfaceSubtle,
+            focusedBorderColor = EmeraldGreen,
+            unfocusedBorderColor = Color.Transparent,
+            focusedTextColor = TextPrimary,
+            unfocusedTextColor = TextPrimary,
+            cursorColor = EmeraldGreen
+        ),
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun SpringActionButton(
+    text: String,
+    gradient: Brush,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val haptics = LocalHapticFeedback.current
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = 0.45f, stiffness = 450f),
+        label = "btnScale"
+    )
+
+    Box(
+        modifier = modifier
+            .scale(scale)
+            .height(54.dp)
+            .background(gradient)
+            .clickable(interactionSource = interaction, indication = null) {
+                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontFamily = DisplayFamily,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = PureWhite,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+fun AnimatedFloatingBottomBar(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(14.dp, RoundedCornerShape(50), ambientColor = Color.Black.copy(alpha = 0.12f)),
+        shape = RoundedCornerShape(50),
+        color = PureWhite,
+        border = BorderStroke(1.dp, BorderLight)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FloatingNavPill(
+                label = "Home",
+                selected = selectedTab == 0,
+                activeColor = EmeraldGreen,
+                onClick = { onTabSelected(0) },
+                icon = { color -> HomeIcon(color = color, size = 18.dp) }
+            )
+            FloatingNavPill(
+                label = "Post",
+                selected = selectedTab == 1,
+                activeColor = SunsetOrange,
+                onClick = { onTabSelected(1) },
+                icon = { color -> PlusIcon(color = color, size = 18.dp) }
+            )
+            FloatingNavPill(
+                label = "Profile",
+                selected = selectedTab == 2,
+                activeColor = VioletPop,
+                onClick = { onTabSelected(2) },
+                icon = { color -> ProfileIcon(color = color, size = 18.dp) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FloatingNavPill(
+    label: String,
+    selected: Boolean,
+    activeColor: Color,
+    onClick: () -> Unit,
+    icon: @Composable (Color) -> Unit
+) {
+    val bg by animateColorAsState(
+        if (selected) activeColor.copy(alpha = 0.14f) else Color.Transparent,
+        tween(200),
+        label = "navBg"
+    )
+    val contentColor by animateColorAsState(
+        if (selected) activeColor else TextSecondary,
+        tween(200),
+        label = "navFg"
+    )
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .animateContentSize(spring(dampingRatio = 0.7f, stiffness = 380f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = if (selected) 18.dp else 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        icon(contentColor)
+        AnimatedVisibility(visible = selected) {
+            Row {
+                Spacer(Modifier.width(7.dp))
+                Text(
+                    label,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = contentColor,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
+    }
+}
+
+private fun categoryAccent(category: String): Color = when (category) {
+    "Notes" -> SkyBlue
+    "Books" -> EmeraldGreen
+    "Electronics" -> VioletPop
+    "Hostel" -> SunsetOrange
+    else -> EmeraldGreen
+}
+
+@Composable
+private fun CategoryArtIcon(category: String, tint: Color, size: Dp) {
+    when (category) {
+        "Notes" -> BookArt(tint, size)
+        "Books" -> BookArt(tint, size)
+        "Electronics" -> BoltArt(tint, size)
+        "Hostel" -> HomeIcon(tint, size)
+        else -> BoxArt(tint, size)
+    }
+}
+
+@Composable
+private fun BookArt(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawRoundRect(color, Offset(w * 0.18f, h * 0.14f), Size(w * 0.64f, h * 0.72f), CornerRadius(w * 0.08f), style = s)
+        drawLine(color, Offset(w * 0.34f, h * 0.14f), Offset(w * 0.34f, h * 0.86f), strokeWidth = w * 0.09f)
+    }
+}
+
+@Composable
+private fun BoltArt(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val path = Path().apply {
+            moveTo(w * 0.56f, h * 0.12f)
+            lineTo(w * 0.24f, h * 0.56f)
+            lineTo(w * 0.50f, h * 0.56f)
+            lineTo(w * 0.44f, h * 0.88f)
+            lineTo(w * 0.76f, h * 0.44f)
+            lineTo(w * 0.50f, h * 0.44f)
+            close()
+        }
+        drawPath(path, color)
+    }
+}
+
+@Composable
+private fun BoxArt(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawRoundRect(color, Offset(w * 0.16f, h * 0.22f), Size(w * 0.68f, h * 0.58f), CornerRadius(w * 0.1f), style = s)
+        drawLine(color, Offset(w * 0.16f, h * 0.42f), Offset(w * 0.84f, h * 0.42f), strokeWidth = w * 0.09f)
+    }
+}
+
+@Composable
+private fun HomeIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.11f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val roof = Path().apply {
+            moveTo(w * 0.16f, h * 0.48f)
+            lineTo(w * 0.5f, h * 0.18f)
+            lineTo(w * 0.84f, h * 0.48f)
+        }
+        drawPath(roof, color, style = s)
+        drawRect(color, Offset(w * 0.26f, h * 0.48f), Size(w * 0.48f, h * 0.34f), style = s)
+    }
+}
+
+@Composable
+private fun PlusIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val stroke = w * 0.13f
+        drawLine(color, Offset(w * 0.5f, h * 0.2f), Offset(w * 0.5f, h * 0.8f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(w * 0.2f, h * 0.5f), Offset(w * 0.8f, h * 0.5f), strokeWidth = stroke, cap = StrokeCap.Round)
+    }
+}
+
+@Composable
+private fun ProfileIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.11f, cap = StrokeCap.Round)
+        drawCircle(color, radius = w * 0.18f, center = Offset(w * 0.5f, h * 0.34f), style = s)
+        val arc = Path().apply {
+            moveTo(w * 0.2f, h * 0.84f)
+            quadraticTo(w * 0.5f, h * 0.58f, w * 0.8f, h * 0.84f)
+        }
+        drawPath(arc, color, style = s)
+    }
+}
+
+@Composable
+private fun SearchIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.11f, cap = StrokeCap.Round)
+        drawCircle(color, radius = w * 0.28f, center = Offset(w * 0.44f, h * 0.44f), style = s)
+        drawLine(color, Offset(w * 0.65f, h * 0.65f), Offset(w * 0.84f, h * 0.84f), strokeWidth = w * 0.12f, cap = StrokeCap.Round)
+    }
+}
+
+@Composable
+private fun MailIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawRoundRect(color, Offset(w * 0.14f, h * 0.24f), Size(w * 0.72f, h * 0.52f), CornerRadius(w * 0.08f), style = s)
+        val flap = Path().apply {
+            moveTo(w * 0.16f, h * 0.28f)
+            lineTo(w * 0.5f, h * 0.54f)
+            lineTo(w * 0.84f, h * 0.28f)
+        }
+        drawPath(flap, color, style = s)
+    }
+}
+
+@Composable
+private fun LockIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawRoundRect(color, Offset(w * 0.22f, h * 0.46f), Size(w * 0.56f, h * 0.38f), CornerRadius(w * 0.08f), style = s)
+        val shackle = Path().apply {
+            moveTo(w * 0.32f, h * 0.46f)
+            lineTo(w * 0.32f, h * 0.32f)
+            quadraticTo(w * 0.5f, h * 0.12f, w * 0.68f, h * 0.32f)
+            lineTo(w * 0.68f, h * 0.46f)
+        }
+        drawPath(shackle, color, style = s)
+    }
+}
+
+@Composable
+private fun EyeIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val lid = Path().apply {
+            moveTo(w * 0.12f, h * 0.5f)
+            quadraticTo(w * 0.5f, h * 0.18f, w * 0.88f, h * 0.5f)
+            quadraticTo(w * 0.5f, h * 0.82f, w * 0.12f, h * 0.5f)
+        }
+        drawPath(lid, color, style = s)
+        drawCircle(color, radius = w * 0.12f, center = Offset(w * 0.5f, h * 0.5f))
+    }
+}
+
+@Composable
+private fun BookmarkIcon(filled: Boolean, color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val path = Path().apply {
+            moveTo(w * 0.24f, h * 0.16f)
+            lineTo(w * 0.76f, h * 0.16f)
+            lineTo(w * 0.76f, h * 0.84f)
+            lineTo(w * 0.5f, h * 0.64f)
+            lineTo(w * 0.24f, h * 0.84f)
+            close()
+        }
+        if (filled) drawPath(path, color)
+        else drawPath(path, color, style = Stroke(width = w * 0.11f, join = StrokeJoin.Round))
+    }
+}
+
+@Composable
+private fun BackIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.12f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val chevron = Path().apply {
+            moveTo(w * 0.62f, h * 0.24f)
+            lineTo(w * 0.34f, h * 0.5f)
+            lineTo(w * 0.62f, h * 0.76f)
+        }
+        drawPath(chevron, color, style = s)
+    }
+}
+
+@Composable
+private fun UploadIcon(color: Color, size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val s = Stroke(width = w * 0.11f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawLine(color, Offset(w * 0.5f, h * 0.78f), Offset(w * 0.5f, h * 0.24f), strokeWidth = w * 0.11f, cap = StrokeCap.Round)
+        val arrow = Path().apply {
+            moveTo(w * 0.28f, h * 0.44f)
+            lineTo(w * 0.5f, h * 0.22f)
+            lineTo(w * 0.72f, h * 0.44f)
+        }
+        drawPath(arrow, color, style = s)
+    }
+}
+
+// ==========================================
+// 12. COMPOSABLE PREVIEWS
+// ==========================================
+@Preview(showBackground = true, name = "Welcome")
+@Composable
+private fun PreviewWelcome() {
+    CampusVaultTheme {
+        OnboardingAuthScreen(initialMode = AuthMode.WELCOME)
+    }
+}
+
+@Preview(showBackground = true, name = "Login")
+@Composable
+private fun PreviewLogin() {
+    CampusVaultTheme {
+        OnboardingAuthScreen(initialMode = AuthMode.LOGIN)
+    }
+}
+
+@Preview(showBackground = true, name = "Sign Up")
+@Composable
+private fun PreviewSignUp() {
+    CampusVaultTheme {
+        OnboardingAuthScreen(initialMode = AuthMode.SIGNUP)
+    }
+}
+
+@Preview(showBackground = true, name = "Home Feed")
+@Composable
+private fun PreviewHomeFeed() {
+    CampusVaultTheme {
+        CampusVaultApp(startAuthenticated = true)
+    }
+}

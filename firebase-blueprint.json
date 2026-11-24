@@ -1,0 +1,180 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private campus profile for an authenticated student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "collegeEmail": { "type": "string" },
+        "branch": { "type": "string", "enum": ["CSE", "ECE", "MECH", "CIVIL", "ISE", "AIML"] },
+        "gradYear": { "type": "string", "enum": ["2026", "2027", "2028", "2029"] },
+        "phoneNumber": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fullName", "collegeEmail", "branch", "gradYear", "verified", "createdAt", "updatedAt"]
+    },
+    "VaultListing": {
+      "title": "VaultListing",
+      "description": "A campus marketplace listing for notes, books, tech, gear, or hostel items.",
+      "type": "object",
+      "properties": {
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "batchTag": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["Notes", "Books", "Laptops & Tech", "Calculators & Gear", "Hostel", "Uniforms"] },
+        "price": { "type": "string" },
+        "priceAmount": { "type": "integer" },
+        "originalPriceAmount": { "type": "integer" },
+        "pricingMode": { "type": "string", "enum": ["Paid", "Free", "Borrow"] },
+        "freeItem": { "type": "boolean" },
+        "digitalItem": { "type": "boolean" },
+        "condition": { "type": "string", "enum": ["New", "Like New", "Good", "Fair"] },
+        "meetupSpot": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "sold"] },
+        "visibility": { "type": "string", "enum": ["campus"] },
+        "borrowDurationDays": { "type": "integer" },
+        "borrowWindowLabel": { "type": "string" },
+        "attachmentName": { "type": "string" },
+        "resourceLink": { "type": "string" },
+        "photoUrls": { "type": "array", "items": { "type": "string" } },
+        "studyTags": { "type": "array", "items": { "type": "string" } },
+        "aiSummary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "sellerId", "sellerName", "batchTag", "title", "description", "category",
+        "price", "priceAmount", "pricingMode", "freeItem", "digitalItem",
+        "condition", "meetupSpot", "status", "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "UserListingRef": {
+      "title": "UserListingRef",
+      "description": "Reference to a saved or claimed/downloaded listing scoped to the user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "listingId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "batchTag": { "type": "string" },
+        "freeItem": { "type": "boolean" },
+        "digitalItem": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "listingId", "title", "category", "price", "sellerName", "batchTag", "freeItem", "digitalItem", "createdAt"]
+    },
+    "CampusRequest": {
+      "title": "CampusRequest",
+      "description": "A pickup, offer negotiation, or borrow request between buyer and seller.",
+      "type": "object",
+      "properties": {
+        "listingId": { "type": "string" },
+        "listingTitle": { "type": "string" },
+        "listingCategory": { "type": "string" },
+        "listingPrice": { "type": "string" },
+        "pricingMode": { "type": "string", "enum": ["Paid", "Free", "Borrow"] },
+        "askingPriceAmount": { "type": "integer" },
+        "offeredPriceAmount": { "type": "integer" },
+        "counterPriceAmount": { "type": "integer" },
+        "agreedPriceAmount": { "type": "integer" },
+        "negotiationStatus": { "type": "string", "enum": ["none", "offered", "countered", "accepted"] },
+        "meetupSpot": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "buyerName": { "type": "string" },
+        "buyerBatch": { "type": "string" },
+        "buyerPhone": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "participantIds": { "type": "array" },
+        "message": { "type": "string" },
+        "sellerNote": { "type": "string" },
+        "handoverPin": { "type": "string" },
+        "borrowDurationDays": { "type": "integer" },
+        "borrowDueAt": { "type": "string", "format": "date-time" },
+        "borrowReturnStatus": { "type": "string", "enum": ["none", "borrowed", "returned"] },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "returnedAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "listingId", "listingTitle", "listingCategory", "listingPrice", "meetupSpot",
+        "buyerId", "buyerName", "buyerBatch", "sellerId", "sellerName",
+        "participantIds", "message", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "RequestMessage": {
+      "title": "RequestMessage",
+      "description": "Live meetup chat message inside a pickup request thread.",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderBatch": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["requestId", "senderId", "senderName", "senderBatch", "text", "createdAt"]
+    },
+    "WantedPost": {
+      "title": "WantedPost",
+      "description": "A student Looking For request on the campus wanted board.",
+      "type": "object",
+      "properties": {
+        "requesterId": { "type": "string" },
+        "requesterName": { "type": "string" },
+        "batchTag": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "maxBudget": { "type": "string" },
+        "meetupSpot": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "fulfilled"] },
+        "visibility": { "type": "string", "enum": ["campus"] },
+        "fulfilledListingId": { "type": "string" },
+        "fulfilledByName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["requesterId", "requesterName", "batchTag", "title", "description", "category", "maxBudget", "meetupSpot", "status", "visibility", "createdAt", "updatedAt"]
+    },
+    "SellerRating": {
+      "title": "SellerRating",
+      "description": "Verified handover rating submitted by a buyer after request completion.",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string" },
+        "listingId": { "type": "string" },
+        "listingTitle": { "type": "string" },
+        "raterId": { "type": "string" },
+        "raterName": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "score": { "type": "integer" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["requestId", "listingId", "listingTitle", "raterId", "raterName", "sellerId", "score", "comment", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": { "$ref": "#/entities/UserProfile" } },
+    "/users/{userId}/saved/{listingId}": { "schema": { "$ref": "#/entities/UserListingRef" } },
+    "/users/{userId}/claims/{listingId}": { "schema": { "$ref": "#/entities/UserListingRef" } },
+    "/listings/{listingId}": { "schema": { "$ref": "#/entities/VaultListing" } },
+    "/requests/{requestId}": { "schema": { "$ref": "#/entities/CampusRequest" } },
+    "/requests/{requestId}/messages/{messageId}": { "schema": { "$ref": "#/entities/RequestMessage" } },
+    "/wanted/{wantedId}": { "schema": { "$ref": "#/entities/WantedPost" } },
+    "/ratings/{requestId}": { "schema": { "$ref": "#/entities/SellerRating" } }
+  }
+}

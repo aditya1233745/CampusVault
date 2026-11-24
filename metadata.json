@@ -1,0 +1,6 @@
+{
+  "name": "CampusVault",
+  "description": "Campus marketplace and study notes-sharing app for verified students to buy, sell, borrow, and share notes, books, electronics, and hostel gear.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

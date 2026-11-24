@@ -1,0 +1,869 @@
+package com.example.campusvault
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.provider.OpenableColumns
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+// ==========================================
+// 1. WHITE + GREEN + ORANGE + SKY BLUE + VIOLET PALETTE
+// ==========================================
+private val PureWhite = Color(0xFFFFFFFF)
+private val CanvasOffWhite = Color(0xFFF7F8FA)
+private val SurfaceSubtle = Color(0xFFF3F4F6)
+private val BorderLight = Color(0xFFE5E7EB)
+private val EmeraldGreen = Color(0xFF16A34A)
+private val EmeraldLight = Color(0xFFDCFCE7)
+private val SunsetOrange = Color(0xFFF97316)
+private val OrangeLight = Color(0xFFFFEDD5)
+private val SolarAmber = Color(0xFFFACC15)
+private val SkyBlue = Color(0xFF0EA5E9)
+private val SkyLight = Color(0xFFE0F2FE)
+private val VioletPop = Color(0xFF7C3AED)
+private val VioletLight = Color(0xFFEDE9FE)
+private val AlertCrimson = Color(0xFFDC2626)
+private val TextPrimary = Color(0xFF111827)
+private val TextSecondary = Color(0xFF6B7280)
+
+private val GreenActionGradient = Brush.horizontalGradient(
+    listOf(EmeraldGreen, Color(0xFF15803D))
+)
+private val OrangeAccentGradient = Brush.horizontalGradient(
+    listOf(SunsetOrange, Color(0xFFEA580C))
+)
+private val VioletGradient = Brush.horizontalGradient(
+    listOf(VioletPop, Color(0xFF6D28D9))
+)
+private val BrandHeroGradient = Brush.verticalGradient(
+    listOf(Color(0xFF0B4F27), Color(0xFF15803D), Color(0xFF22A456))
+)
+private val ProfileGradient = Brush.linearGradient(
+    listOf(VioletPop, SkyBlue)
+)
+
+// ==========================================
+// 2. TYPOGRAPHY
+// ==========================================
+private val DisplayFamily = FontFamily.SansSerif
+private val BodyFamily = FontFamily.SansSerif
+
+private val CampusVaultTypography = Typography(
+    displaySmall = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 26.sp,
+        letterSpacing = (-0.6).sp,
+        color = TextPrimary
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 20.sp,
+        letterSpacing = (-0.4).sp,
+        color = TextPrimary
+    ),
+    titleMedium = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 15.sp,
+        letterSpacing = (-0.2).sp,
+        color = TextPrimary
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = BodyFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        color = TextSecondary
+    ),
+    labelSmall = TextStyle(
+        fontFamily = BodyFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        letterSpacing = 0.2.sp
+    )
+).let { t ->
+    t.copy(
+        bodyLarge = t.bodyLarge.copy(fontFamily = BodyFamily),
+        bodySmall = t.bodySmall.copy(fontFamily = BodyFamily),
+        labelLarge = t.labelLarge.copy(fontFamily = BodyFamily),
+        labelMedium = t.labelMedium.copy(fontFamily = BodyFamily),
+        titleLarge = t.titleLarge.copy(fontFamily = DisplayFamily),
+        titleSmall = t.titleSmall.copy(fontFamily = BodyFamily),
+        headlineLarge = t.headlineLarge.copy(fontFamily = DisplayFamily),
+        headlineMedium = t.headlineMedium.copy(fontFamily = DisplayFamily),
+        displayLarge = t.displayLarge.copy(fontFamily = DisplayFamily),
+        displayMedium = t.displayMedium.copy(fontFamily = DisplayFamily)
+    )
+}
+
+// ==========================================
+// 3. DATA MODELS
+// ==========================================
+@Immutable
+data class UserProfile(
+    val fullName: String = "",
+    val collegeEmail: String = "",
+    val branch: String = "CSE",
+    val gradYear: String = "2026",
+    val isVerified: Boolean = true,
+    val id: String = ""
+) {
+    val batchTag: String get() = "$branch '${gradYear.takeLast(2)}"
+}
+
+@Immutable
+data class VaultItem(
+    val id: String,
+    val title: String,
+    val description: String,
+    val category: String,
+    val price: String,
+    val pricingMode: String,
+    val isFree: Boolean,
+    val isDigital: Boolean,
+    val condition: String,
+    val sellerName: String,
+    val batchTag: String,
+    val meetupSpot: String,
+    val isSold: Boolean = false,
+    val sellerPhone: String = "",
+    val sellerId: String = "",
+    val fileUrl: String = ""
+)
+
+enum class AuthMode { WELCOME, LOGIN, SIGNUP }
+
+private fun displayName(context: Context, uri: Uri): String {
+    context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+        if (c.moveToFirst()) return c.getString(0) ?: "file"
+    }
+    return "file"
+}
+
+// ==========================================
+// 4. MAIN ACTIVITY & THEME
+// ==========================================
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            CampusVaultTheme {
+                CampusVaultApp()
+            }
+        }
+    }
+}
+
+@Composable
+fun CampusVaultTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = lightColorScheme(
+            primary = EmeraldGreen,
+            secondary = SunsetOrange,
+            tertiary = SkyBlue,
+            background = CanvasOffWhite,
+            surface = PureWhite,
+            onPrimary = PureWhite,
+            onSecondary = PureWhite,
+            onBackground = TextPrimary,
+            onSurface = TextPrimary
+        ),
+        typography = CampusVaultTypography,
+        content = {
+            ProvideTextStyle(TextStyle(fontFamily = BodyFamily)) {
+                content()
+            }
+        }
+    )
+}
+
+// ==========================================
+// 5. ROOT NAVIGATION WITH SMOOTH TRANSITIONS
+// ==========================================
+@Composable
+fun CampusVaultApp(startAuthenticated: Boolean = false) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var currentUser by remember {
+        mutableStateOf(
+            if (startAuthenticated) UserProfile("Member", "student@college.edu", "CSE", "2026", id = "local-user")
+            else null
+        )
+    }
+    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedItem by remember { mutableStateOf<VaultItem?>(null) }
+    var listings by remember { mutableStateOf<List<VaultItem>>(emptyList()) }
+    var savedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var downloadedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var authLoading by remember { mutableStateOf(false) }
+    var authMessage by remember { mutableStateOf<String?>(null) }
+    var isPosting by remember { mutableStateOf(false) }
+    var postError by remember { mutableStateOf<String?>(null) }
+
+    fun toggleSave(id: String) {
+        savedIds = if (id !in savedIds) savedIds + id else savedIds - id
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CanvasOffWhite)
+            .windowInsetsPadding(WindowInsets.systemBars)
+    ) {
+        when {
+            currentUser == null -> {
+                OnboardingAuthScreen(
+                    isLoading = authLoading,
+                    message = authMessage,
+                    onModeChange = { authMessage = null },
+                    onLogin = { email, _ ->
+                        scope.launch {
+                            authLoading = true
+                            authMessage = null
+                            delay(250)
+                            val namePart = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+                            currentUser = UserProfile(
+                                fullName = namePart.ifBlank { "Student" },
+                                collegeEmail = email,
+                                branch = "CSE",
+                                gradYear = "2026",
+                                id = "local-user"
+                            )
+                            authLoading = false
+                        }
+                    },
+                    onSignUp = { name, email, _, branch, year ->
+                        scope.launch {
+                            authLoading = true
+                            authMessage = null
+                            delay(250)
+                            currentUser = UserProfile(
+                                fullName = name,
+                                collegeEmail = email,
+                                branch = branch,
+                                gradYear = year,
+                                id = "local-user"
+                            )
+                            authLoading = false
+                        }
+                    }
+                )
+            }
+            selectedItem != null -> {
+                val item = selectedItem!!
+                ProductDetailScreen(
+                    item = item,
+                    isSaved = item.id in savedIds,
+                    isDownloaded = item.id in downloadedIds,
+                    onBack = { selectedItem = null },
+                    onToggleSave = { toggleSave(item.id) },
+                    onPrimaryAction = {
+                        if (item.fileUrl.isNotBlank()) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item.fileUrl)))
+                        }
+                        if (item.id !in downloadedIds) {
+                            downloadedIds = downloadedIds + item.id
+                        }
+                    }
+                )
+            }
+            else -> {
+                AnimatedContent(
+                    targetState = selectedTab,
+                    transitionSpec = {
+                        (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 28 })
+                            .togetherWith(fadeOut(tween(150)))
+                    },
+                    label = "tabTransition"
+                ) { tab ->
+                    when (tab) {
+                        0 -> HomeFeedScreen(
+                            user = currentUser!!,
+                            items = listings.filter { !it.isSold },
+                            savedIds = savedIds,
+                            onToggleSave = { id -> toggleSave(id) },
+                            onItemClick = { selectedItem = it },
+                            onNavigateToSell = { selectedTab = 1 }
+                        )
+                        1 -> SellUploadScreen(
+                            user = currentUser!!,
+                            isPosting = isPosting,
+                            errorMessage = postError,
+                            onPost = { draft, fileUri ->
+                                if (!isPosting) {
+                                    isPosting = true
+                                    postError = null
+                                    val newItem = draft.copy(
+                                        sellerId = currentUser!!.id,
+                                        sellerName = currentUser!!.fullName,
+                                        batchTag = currentUser!!.batchTag,
+                                        fileUrl = fileUri?.toString() ?: ""
+                                    )
+                                    listings = listOf(newItem) + listings
+                                    isPosting = false
+                                    selectedTab = 0
+                                }
+                            }
+                        )
+                        2 -> ProfileScreen(
+                            user = currentUser!!,
+                            listings = listings,
+                            savedIds = savedIds,
+                            downloadedIds = downloadedIds,
+                            onMarkSold = { id ->
+                                listings = listings.map { if (it.id == id) it.copy(isSold = true) else it }
+                            },
+                            onDeleteListing = { id ->
+                                listings = listings.filterNot { it.id == id }
+                            },
+                            onSignOut = {
+                                currentUser = null
+                                listings = emptyList()
+                                savedIds = emptySet()
+                                downloadedIds = emptySet()
+                                selectedTab = 0
+                            }
+                        )
+                    }
+                }
+                AnimatedFloatingBottomBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 18.dp, vertical = 14.dp)
+                )
+            }
+        }
+    }
+}
+
+// ==========================================
+// 6. WELCOME, LOGIN & SIGN UP FLOW
+// ==========================================
+@Composable
+fun OnboardingAuthScreen(
+    initialMode: AuthMode = AuthMode.WELCOME,
+    isLoading: Boolean = false,
+    message: String? = null,
+    onModeChange: () -> Unit = {},
+    onLogin: (String, String) -> Unit = { _, _ -> },
+    onSignUp: (String, String, String, String, String) -> Unit = { _, _, _, _, _ -> }
+) {
+    var authMode by remember { mutableStateOf(initialMode) }
+    AnimatedContent(
+        targetState = authMode,
+        transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(180)) },
+        label = "authTransition"
+    ) { mode ->
+        when (mode) {
+            AuthMode.WELCOME -> WelcomeHeroScreen(
+                onGetStarted = { authMode = AuthMode.LOGIN }
+            )
+            AuthMode.LOGIN -> LoginSheetScreen(
+                isLoading = isLoading,
+                message = message,
+                onSwitchToSignUp = { onModeChange(); authMode = AuthMode.SIGNUP },
+                onLogin = onLogin
+            )
+            AuthMode.SIGNUP -> SignUpSheetScreen(
+                isLoading = isLoading,
+                message = message,
+                onSwitchToLogin = { onModeChange(); authMode = AuthMode.LOGIN },
+                onSignUp = onSignUp
+            )
+        }
+    }
+}
+
+@Composable
+fun WelcomeHeroScreen(onGetStarted: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandHeroGradient)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            HeroBackdrop(modifier = Modifier.fillMaxSize())
+            AnimatedWordmark()
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            color = PureWhite,
+            shadowElevation = 16.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp, vertical = 28.dp)
+            ) {
+                SpringActionButton(
+                    text = "Get Started",
+                    gradient = GreenActionGradient,
+                    onClick = onGetStarted,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroBackdrop(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "backdrop")
+    val drift by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(9000, easing = LinearEasing), RepeatMode.Reverse),
+        label = "drift"
+    )
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        drawCircle(PureWhite.copy(alpha = 0.07f), radius = w * 0.55f, center = Offset(w * (0.08f + 0.06f * drift), h * 0.12f))
+        drawCircle(PureWhite.copy(alpha = 0.06f), radius = w * 0.42f, center = Offset(w * (0.98f - 0.08f * drift), h * 0.62f))
+        drawCircle(SunsetOrange.copy(alpha = 0.28f), radius = w * 0.08f, center = Offset(w * 0.84f, h * (0.2f + 0.05f * drift)))
+        drawCircle(SolarAmber.copy(alpha = 0.32f), radius = w * 0.035f, center = Offset(w * 0.14f, h * (0.7f - 0.05f * drift)))
+    }
+}
+
+@Composable
+private fun AnimatedWordmark(modifier: Modifier = Modifier) {
+    val word = "CampusVault"
+    val inspecting = LocalInspectionMode.current
+    val letters = remember { word.map { Animatable(if (inspecting) 1f else 0f) } }
+    val underline = remember { Animatable(if (inspecting) 1f else 0f) }
+
+    LaunchedEffect(Unit) {
+        letters.forEachIndexed { index, anim ->
+            launch {
+                delay(200L + index * 65L)
+                anim.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 220f))
+            }
+        }
+        delay(200L + word.length * 65L + 300L)
+        underline.animateTo(1f, tween(650, easing = FastOutSlowInEasing))
+    }
+
+    val shimmer = rememberInfiniteTransition(label = "wordShimmer")
+    val sweep by shimmer.animateFloat(
+        initialValue = -0.3f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            tween(2200, delayMillis = 1600, easing = LinearEasing),
+            RepeatMode.Restart
+        ),
+        label = "sweep"
+    )
+
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            modifier = Modifier
+                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    val band = size.width * 0.22f
+                    val x = size.width * sweep
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color.Transparent, SolarAmber, SunsetOrange, Color.Transparent),
+                            start = Offset(x - band, 0f),
+                            end = Offset(x + band, size.height * 0.3f)
+                        ),
+                        blendMode = BlendMode.SrcAtop
+                    )
+                },
+            verticalAlignment = Alignment.Bottom
+        ) {
+            word.forEachIndexed { index, ch ->
+                Text(
+                    text = ch.toString(),
+                    fontFamily = DisplayFamily,
+                    fontSize = 46.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-1).sp,
+                    color = PureWhite,
+                    modifier = Modifier.graphicsLayer {
+                        val p = letters[index].value
+                        alpha = p.coerceIn(0f, 1f)
+                        translationY = (1f - p) * 90f
+                        val sc = 0.5f + 0.5f * p
+                        scaleX = sc
+                        scaleY = sc
+                    }
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .width(84.dp * underline.value.coerceIn(0f, 1f))
+                .height(5.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Brush.horizontalGradient(listOf(SunsetOrange, SolarAmber)))
+        )
+    }
+}
+
+@Composable
+fun LoginSheetScreen(
+    isLoading: Boolean,
+    message: String?,
+    onSwitchToSignUp: () -> Unit,
+    onLogin: (String, String) -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var localError by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandHeroGradient)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(190.dp)
+        ) {
+            AuthHeaderPattern(modifier = Modifier.fillMaxSize())
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 24.dp, vertical = 22.dp)
+            ) {
+                Text(
+                    text = "CampusVault",
+                    fontFamily = DisplayFamily,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.8).sp,
+                    color = PureWhite
+                )
+                Spacer(Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .width(40.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(SunsetOrange)
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            color = PureWhite,
+            shadowElevation = 16.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 26.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Login", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Don't have an account? ", fontSize = 13.sp, color = TextSecondary)
+                    Text(
+                        "Sign Up",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = SunsetOrange,
+                        modifier = Modifier.clickable(onClick = onSwitchToSignUp)
+                    )
+                }
+                Spacer(Modifier.height(22.dp))
+                PillInputField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "College Email",
+                    leadingIcon = { MailIcon(color = TextSecondary, size = 18.dp) }
+                )
+                Spacer(Modifier.height(14.dp))
+                PillInputField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = "Password",
+                    isPassword = !passwordVisible,
+                    leadingIcon = { LockIcon(color = TextSecondary, size = 18.dp) },
+                    trailingIcon = {
+                        Box(modifier = Modifier.clickable { passwordVisible = !passwordVisible }) {
+                            EyeIcon(color = if (passwordVisible) EmeraldGreen else TextSecondary, size = 18.dp)
+                        }
+                    }
+                )
+                AuthMessageText(localError ?: message)
+                Spacer(Modifier.height(24.dp))
+                SpringActionButton(
+                    text = if (isLoading) "Please wait" else "Login",
+                    gradient = GreenActionGradient,
+                    onClick = {
+                        when {
+                            isLoading -> Unit
+                            !email.contains("@") -> localError = "Enter a valid email"
+                            password.length < 6 -> localError = "Password must be at least 6 characters"
+                            else -> {
+                                localError = null
+                                onLogin(email, password)
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuthMessageText(text: String?) {
+    if (text.isNullOrBlank()) return
+    val info = text.startsWith("Check your email")
+    Spacer(Modifier.height(12.dp))
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = if (info) EmeraldGreen else AlertCrimson,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun SignUpSheetScreen(
+    isLoading: Boolean,
+    message: String?,
+    onSwitchToLogin: () -> Unit,
+    onSignUp: (String, String, String, String, String) -> Unit
+) {
+    var localError by remember { mutableStateOf<String?>(null) }
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var selectedBranch by remember { mutableStateOf("CSE") }
+    var selectedYear by remember { mutableStateOf("2026") }
+
+    val branches = listOf("CSE", "ECE", "MECH", "CIVIL", "ISE", "AIML")
+    val years = listOf("2026", "2027", "2028", "2029")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandHeroGradient)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+        ) {
+            AuthHeaderPattern(modifier = Modifier.fillMaxSize())
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 24.dp, vertical = 22.dp)
+            ) {
+                Text(
+                    text = "CampusVault",
+                    fontFamily = DisplayFamily,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.8).sp,
+                    color = PureWhite
+                )
+                Spacer(Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .width(40.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(SunsetOrange)
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            color = PureWhite,
+            shadowElevation = 16.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Sign Up", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Already have an account? ", fontSize = 13.sp, color = TextSecondary)
+                    Text(
+                        "Login",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = SunsetOrange,
+                        modifier = Modifier.clickable(onClick = onSwitchToLogin)
+                    )
+                }
+                Spacer(Modifier.height(20.dp))
+                PillInputField(
+                    value = fullName,
+                    onValueChange = { fullName = it },
+                    placeholder = "Full Name",
+                    leadingIcon = { ProfileIcon(color = TextSecondary, size = 18.dp) }
+                )
+                Spacer(Modifier.height(12.dp))
+                PillInputField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "College Email",
+                    leadingIcon = { MailIcon(color = TextSecondary, size = 18.dp) }
+                )
+                Spacer(Modifier.height(12.dp))
+                PillInputField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = "Password",
+                    isPassword = !passwordVisible,
+                    leadingIcon = { LockIcon(color = TextSecondary, size = 18.dp) },
+                    trailingIcon = {
+                        Box(modifier = Modifier.clickable { passwordVisible = !passwordVisible }) {
+                            EyeIcon(color = if (passwordVisible) EmeraldGreen else TextSecondary, size = 18.dp)
+                        }
+                    }
+                )
+                Spacer(Modifier.height(16.dp))
+                Text("Branch", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifi...

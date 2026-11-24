@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1042549553012",
+    "firebase_url": "https://campusvault-e35ca-default-rtdb.firebaseio.com",
+    "project_id": "campusvault-e35ca",
+    "storage_bucket": "campusvault-e35ca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1042549553012:android:dd1a3a8314b9e835fc5e21",
+        "android_client_info": {
+          "package_name": "com.campus.CampusVault"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvJVDRMg90hEuaAHtakEuV7pGWFFDNbNA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
